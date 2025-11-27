@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Результат</title>
+</head>
+<body>
+    <h1>Тест завершен!</h1>
+    <h2>Ваш результат: {{ score }} из {{ total }}</h2>
+
+    <p>
+        {% if score == total %}
+            Поздравляем! Идеальный результат! 
+        {% else %}
+            Хорошая попытка, но можно лучше.
+        {% endif %}
+    </p>
+
+    <a href="{% url 'home' %}"><button>Вернуться к списку тестов</button></a>
+</body>
+</html>

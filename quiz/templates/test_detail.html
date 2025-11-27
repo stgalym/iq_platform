@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ test.title }}</title>
+</head>
+<body>
+    <h1>{{ test.title }}</h1>
+    <p>{{ test.description }}</p>
+    <hr>
+
+    <form method="post">
+        {% csrf_token %} {% for question in test.questions.all %}
+            <div style="margin-bottom: 20px;">
+                <h3>{{ question.order }}. {{ question.text }}</h3>
+                
+                {% for answer in question.answers.all %}
+                    <div>
+                        <input type="radio" 
+                               id="answer_{{ answer.id }}" 
+                               name="question_{{ question.id }}" 
+                               value="{{ answer.id }}">
+                        
+                        <label for="answer_{{ answer.id }}">{{ answer.text }}</label>
+                    </div>
+                {% endfor %}
+            </div>
+        {% empty %}
+            <p>В этом тесте пока нет вопросов.</p>
+        {% endfor %}
+
+        <button type="submit">Завершить и узнать результат</button>
+    </form>
+
+    <br>
+    <a href="{% url 'home' %}">Вернуться назад</a>
+</body>
+</html>

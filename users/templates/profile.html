@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <div class="card">
+        <div class="card-header">
+            Профиль пользователя
+        </div>
+        <div class="card-body">
+            <h5 class="card-title">{{ user.username }}</h5>
+            <p class="card-text">Email: {{ user.email }}</p>
+            <p class="card-text">Текущий IQ: <strong>{{ user.iq_score|default:"Не определен" }}</strong></p>
+            <p>Статус: {% if user.is_premium %}Premium{% else %}Базовый{% endif %}</p>
+        </div>
+    </div>
+
+    <h3 class="mt-4">История тестов</h3>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Тест</th>
+                <th>Баллы</th>
+                <th>Дата</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for res in results %}
+            <tr>
+                <td>{{ res.test.title }}</td>
+                <td>{{ res.score }}</td>
+                <td>{{ res.date_taken|date:"d.m.Y H:i" }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="3">Вы еще не проходили тесты.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}
