@@ -25,13 +25,13 @@
                 {% endfor %}
             </div>
         {% empty %}
-            <p>В этом тесте пока нет вопросов.</p>
+            <p>{% trans "В этом тесте пока нет вопросов." %}</p>
         {% endfor %}
 
-        <button type="submit">Завершить и узнать результат</button>
+        <button type="submit">{% trans "Завершить и узнать результат" %}</button>
     </form>
 
     <br>
-    <a href="{% url 'home' %}">Вернуться назад</a>
+    <a href="{% url 'home' %}">{% trans "Вернуться назад" %}</a>
 </body>
 </html>
