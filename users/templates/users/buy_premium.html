@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 text-center">
+        <h1 class="mb-4">{% trans "Выберите свой план" %}</h1>
+
+        <div class="card border-primary mb-3 mx-auto" style="max-width: 25rem;">
+            <div class="card-header bg-primary text-white">PRO ACCCOUNT</div>
+            <div class="card-body text-primary">
+                <h5 class="card-title">{% trans "Безлимитный доступ" %}</h5>
+                <p class="card-text">
+                    ✅ {% trans "Неограниченное количество задач в боте" %}<br>
+                    ✅ {% trans "Доступ ко всем тестам на сайте" %}<br>
+                    ✅ {% trans "Подробная статистика" %}
+                </p>
+                <h2 class="my-4">4 990 ₸ / {% trans "мес" %}</h2>
+                
+                <form method="post">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-lg btn-success w-100">
+                        {% trans "Оплатить картой" %}
+                    </button>
+                </form>
+                <small class="text-muted">{% trans "Это демо-оплата. Деньги списаны не будут." %}</small>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

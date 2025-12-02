@@ -1,20 +1,48 @@
 {% extends 'base.html' %}
+{% load i18n %}
 
 {% block content %}
-    <h1>{% trans "Доступные тесты" %}</h1>
-    {% if tests %}
-        <div class="list-group">
-            {% for test in tests %}
-                <a href="{% url 'test_detail' test.id %}" class="list-group-item list-group-item-action">
-                    <div class="d-flex w-100 justify-content-between">
-                        <h5 class="mb-1">{{ test.title }}</h5>
-                    </div>
-                    <p class="mb-1">{{ test.description }}</p>
-                    <small>{% trans "Нажмите, чтобы начать" %}</small>
-                </a>
-            {% endfor %}
-        </div>
+    
+    {% if user.is_authenticated %}
+        <h1 class="mb-4">{% trans "Доступные тесты" %}</h1>
+        
+        {% if tests %}
+            <div class="list-group">
+                {% for test in tests %}
+                    <a href="{% url 'test_detail' test.id %}" class="list-group-item list-group-item-action" aria-current="true">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h5 class="mb-1">{{ test.title }}</h5>
+                            <small class="text-muted">ID: {{ test.id }}</small>
+                        </div>
+                        <p class="mb-1">{{ test.description }}</p>
+                        <small class="text-primary">{% trans "Нажмите, чтобы начать" %}</small>
+                    </a>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="alert alert-warning">
+                {% trans "Тестов пока нет. Администратор скоро их добавит." %}
+            </div>
+        {% endif %}
+
     {% else %}
-        <p>{% trans "Тестов нет." %}</p>
+        <div class="p-5 mb-4 bg-light rounded-3 text-center">
+            <div class="container-fluid py-5">
+                <h1 class="display-5 fw-bold">IQ System</h1>
+                <p class="col-md-8 fs-4 mx-auto">
+                    {% trans "Добро пожаловать в систему оценки интеллекта. Проходите тесты, следите за прогрессом и развивайтесь с помощью нашего Telegram-бота." %}
+                </p>
+                
+                <div class="d-grid gap-2 d-sm-flex justify-content-sm-center mt-4">
+                    <a href="{% url 'login' %}" class="btn btn-primary btn-lg px-4 gap-3">
+                        {% trans "Войти" %}
+                    </a>
+                    <a href="{% url 'register' %}" class="btn btn-outline-secondary btn-lg px-4">
+                        {% trans "Регистрация" %}
+                    </a>
+                </div>
+            </div>
+        </div>
     {% endif %}
+
 {% endblock %}

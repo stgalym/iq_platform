@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-11-29 06:19+0000\n"
+"POT-Creation-Date: 2025-11-29 16:27+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,21 +18,21 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: config/settings.py:116
+#: config/settings.py:117
 msgid "Russian"
 msgstr ""
 
-#: config/settings.py:117
+#: config/settings.py:118
 msgid "Kazakh"
 msgstr ""
 
-#: config/settings.py:118
+#: config/settings.py:119
 msgid "English"
 msgstr ""
 
 #: quiz/templates/base.html:16
 msgid "Тесты"
-msgstr ""
+msgstr "Tests"
 
 #: quiz/templates/base.html:19
 msgid "Личный кабинет"
@@ -62,33 +62,117 @@ msgstr "Click to start"
 msgid "Тестов нет."
 msgstr "There are no tests."
 
-#: quiz/templates/test_detail.html:28
+#: quiz/templates/test_detail.html:29
 msgid "В этом тесте пока нет вопросов."
 msgstr "There are no questions in this test yet."
 
-#: quiz/templates/test_detail.html:31
+#: quiz/templates/test_detail.html:32
 msgid "Завершить и узнать результат"
 msgstr "Complete and find out the result"
 
-#: quiz/templates/test_detail.html:35
+#: quiz/templates/test_detail.html:36
 msgid "Вернуться назад"
 msgstr "Go back"
 
+#: quiz/templates/test_result.html:5
+msgid "Результат"
+msgstr "Result"
+
 #: quiz/templates/test_result.html:8
+msgid "Тест завершен!"
+msgstr "Test completed!"
+
+#: quiz/templates/test_result.html:9
 msgid "Ваш результат"
 msgstr "Your result"
 
-#: quiz/templates/test_result.html:12
+#: quiz/templates/test_result.html:13
 msgid "Поздравляем! Идеальный результат!"
 msgstr "Congratulations! A perfect result!"
 
-#: quiz/templates/test_result.html:14
+#: quiz/templates/test_result.html:15
 msgid "Хорошая попытка, но можно лучше."
 msgstr "Nice try, but could be better."
 
-#: quiz/templates/test_result.html:18
+#: quiz/templates/test_result.html:19
 msgid "Вернуться к списку тестов"
 msgstr "Return to the list of tests"
+
+#: users/templates/profile.html:6
+msgid "Профиль пользователя"
+msgstr "User profile"
+
+#: users/templates/profile.html:11
+msgid "Текущий IQ"
+msgstr "Current IQ"
+
+#: users/templates/profile.html:12
+msgid "Базовый"
+msgstr "Base"
+
+#: users/templates/profile.html:15
+msgid "Редактировать данные"
+msgstr "Edit profile"
+
+#: users/templates/profile.html:18
+msgid "Сменить пароль"
+msgstr "Change password"
+
+#: users/templates/profile.html:24
+#, fuzzy
+#| msgid "Доступные тесты"
+msgid "История тестов"
+msgstr "Available tests"
+
+#: users/templates/profile.html:28
+msgid "Тест"
+msgstr "Test"
+
+#: users/templates/profile.html:29
+msgid "Баллы"
+msgstr "Points"
+
+#: users/templates/profile.html:30
+msgid "Дата"
+msgstr "Date"
+
+#: users/templates/profile.html:42
+msgid "Вы еще не проходили тесты."
+msgstr "You haven't taken any tests yet."
+
+#: users/templates/registration/password_change_done.html:6
+msgid "Успешно!"
+msgstr "Successfully!"
+
+#: users/templates/registration/password_change_done.html:7
+msgid "Ваш пароль был успешно изменен."
+msgstr "Your password has been successfully changed."
+
+#: users/templates/registration/password_change_done.html:9
+#, fuzzy
+#| msgid "Вернуться назад"
+msgid "Вернуться в профиль"
+msgstr "Go back"
+
+#: users/templates/registration/password_change_form.html:7
+msgid "Смена пароля"
+msgstr "Change password"
+
+#: users/templates/registration/password_change_form.html:11
+msgid "Поменять пароль"
+msgstr "Change password"
+
+#: users/templates/users/edit_profile.html:8
+msgid "Редактирование профиля"
+msgstr "Editing your profile"
+
+#: users/templates/users/edit_profile.html:24
+msgid "Сохранить изменения"
+msgstr "Save changes"
+
+#: users/templates/users/edit_profile.html:25
+msgid "Отмена"
+msgstr "Cancel"
 
 #: venv/lib/python3.10/site-packages/django/contrib/messages/apps.py:16
 msgid "Messages"
@@ -1312,4 +1396,59 @@ msgstr ""
 
 #: venv/lib/python3.10/site-packages/django/views/templates/default_urlconf.html:236
 msgid "Connect, get help, or contribute"
+msgstr ""
+
+#: venv/lib/python3.10/site-packages/modeltranslation/tests/models.py:14
+#: venv/lib/python3.10/site-packages/modeltranslation/tests/models.py:54
+#: venv/lib/python3.10/site-packages/modeltranslation/tests/models.py:62
+#: venv/lib/python3.10/site-packages/modeltranslation/tests/models.py:72
+#: venv/lib/python3.10/site-packages/modeltranslation/tests/models.py:82
+#: venv/lib/python3.10/site-packages/modeltranslation/tests/models.py:86
+#: venv/lib/python3.10/site-packages/modeltranslation/tests/models.py:118
+#: venv/lib/python3.10/site-packages/modeltranslation/tests/models.py:137
+#: venv/lib/python3.10/site-packages/modeltranslation/tests/models.py:364
+#: venv/lib/python3.10/site-packages/modeltranslation/tests/models.py:369
+#: venv/lib/python3.10/site-packages/modeltranslation/tests/models.py:379
+#: venv/lib/python3.10/site-packages/modeltranslation/tests/models.py:399
+#: venv/lib/python3.10/site-packages/modeltranslation/tests/models.py:416
+#: venv/lib/python3.10/site-packages/modeltranslation/tests/models.py:435
+#: venv/lib/python3.10/site-packages/modeltranslation/tests/models.py:441
+#: venv/lib/python3.10/site-packages/modeltranslation/tests/models.py:458
+#: venv/lib/python3.10/site-packages/modeltranslation/tests/models.py:470
+#: venv/lib/python3.10/site-packages/modeltranslation/tests/models.py:478
+msgid "title"
+msgstr ""
+
+#: venv/lib/python3.10/site-packages/modeltranslation/tests/models.py:18
+msgid "password"
+msgstr ""
+
+#: venv/lib/python3.10/site-packages/modeltranslation/tests/models.py:245
+#: venv/lib/python3.10/site-packages/modeltranslation/tests/models.py:264
+msgid "title a"
+msgstr ""
+
+#: venv/lib/python3.10/site-packages/modeltranslation/tests/models.py:249
+#: venv/lib/python3.10/site-packages/modeltranslation/tests/models.py:275
+msgid "title b"
+msgstr ""
+
+#: venv/lib/python3.10/site-packages/modeltranslation/tests/models.py:253
+msgid "title c"
+msgstr ""
+
+#: venv/lib/python3.10/site-packages/modeltranslation/tests/models.py:257
+msgid "title d"
+msgstr ""
+
+#: venv/lib/python3.10/site-packages/modeltranslation/tests/models.py:380
+msgid "visits"
+msgstr ""
+
+#: venv/lib/python3.10/site-packages/modeltranslation/tests/translation.py:62
+msgid "Sorry, translation is not available."
+msgstr ""
+
+#: venv/lib/python3.10/site-packages/modeltranslation/widgets.py:32
+msgid "None"
 msgstr ""

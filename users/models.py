@@ -1,14 +1,28 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
-class CustomUser(AbstractUser):
-    # Добавляем поле для хранения IQ. Может быть пустым (null=True), если тест еще не пройден.
-    iq_score = models.IntegerField(null=True, blank=True, verbose_name="IQ Результат")
-    
-    # Флаг платного режима
-    is_premium = models.BooleanField(default=False, verbose_name="Премиум аккаунт")
+# Дублируем категории (или можно вынести их в отдельный файл constants.py, но пока так)
+CATEGORY_CHOICES = [
+    ('logic', 'Логика'),
+    ('math', 'Математика'),
+    ('spatial', 'Пространственное мышление'),
+    ('memory', 'Память'),
+]
 
-    # Можно добавить аватарку или город позже
+class CustomUser(AbstractUser):
+    iq_score = models.IntegerField(null=True, blank=True, verbose_name="IQ Результат")
+    is_premium = models.BooleanField(default=False, verbose_name="Премиум аккаунт")
     
+    telegram_chat_id = models.CharField(max_length=50, blank=True, null=True, verbose_name="ID Телеграм чата")
+    telegram_code = models.CharField(max_length=10, blank=True, null=True, verbose_name="Код подключения")
+    
+    # НОВОЕ ПОЛЕ: Настройка для бота
+    bot_category = models.CharField(
+        max_length=20, 
+        choices=CATEGORY_CHOICES, 
+        default='logic', 
+        verbose_name="Категория для тренировок в Telegram"
+    )
+
     def __str__(self):
         return self.username

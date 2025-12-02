@@ -16,7 +16,9 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=(n!=1);\n"
+"Plural-Forms: nplurals=4; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
+"n%10<=4 && (n%100<12 || n%100>14) ? 1 : n%10==0 || (n%10>=5 && n%10<=9) || "
+"(n%100>=11 && n%100<=14)? 2 : 3);\n"
 
 #: config/settings.py:117
 msgid "Russian"
@@ -32,145 +34,143 @@ msgstr ""
 
 #: quiz/templates/base.html:16
 msgid "Тесты"
-msgstr "Тесттер"
+msgstr ""
 
 #: quiz/templates/base.html:19
 msgid "Личный кабинет"
-msgstr "Жеке кабинет"
+msgstr ""
 
 #: quiz/templates/base.html:23
 msgid "Выход"
-msgstr "Шығу"
+msgstr ""
 
 #: quiz/templates/base.html:26
 msgid "Войти"
-msgstr "Кіру"
+msgstr ""
 
 #: quiz/templates/base.html:27
 msgid "Регистрация"
-msgstr "Тіркелу"
+msgstr ""
 
 #: quiz/templates/home.html:4
 msgid "Доступные тесты"
-msgstr "Қолжетімді сынақтар"
+msgstr ""
 
 #: quiz/templates/home.html:13
 msgid "Нажмите, чтобы начать"
-msgstr "Бастау үшін басыңыз"
+msgstr ""
 
 #: quiz/templates/home.html:18
 msgid "Тестов нет."
-msgstr "Ешқандай сынақтар жоқ."
+msgstr ""
 
 #: quiz/templates/test_detail.html:29
 msgid "В этом тесте пока нет вопросов."
-msgstr "Бұл сынақта әлі сұрақтар жоқ."
+msgstr ""
 
 #: quiz/templates/test_detail.html:32
 msgid "Завершить и узнать результат"
-msgstr "Толтырыңыз және нәтижесін біліңіз"
+msgstr ""
 
 #: quiz/templates/test_detail.html:36
 msgid "Вернуться назад"
-msgstr "Қайтып келу"
+msgstr ""
 
 #: quiz/templates/test_result.html:5
 msgid "Результат"
-msgstr "Нәтиже"
+msgstr ""
 
 #: quiz/templates/test_result.html:8
 msgid "Тест завершен!"
-msgstr "Сынақ аяқталды!"
+msgstr ""
 
 #: quiz/templates/test_result.html:9
 msgid "Ваш результат"
-msgstr "Сіздің нәтижеңіз"
+msgstr ""
 
 #: quiz/templates/test_result.html:13
 msgid "Поздравляем! Идеальный результат!"
-msgstr "Құттықтаймыз! Керемет нәтиже!"
+msgstr ""
 
 #: quiz/templates/test_result.html:15
 msgid "Хорошая попытка, но можно лучше."
-msgstr "Жақсы әрекет, бірақ жақсырақ болуы мүмкін."
+msgstr ""
 
 #: quiz/templates/test_result.html:19
 msgid "Вернуться к списку тестов"
-msgstr "Тесттер тізіміне оралу"
+msgstr ""
 
 #: users/templates/profile.html:6
 msgid "Профиль пользователя"
-msgstr "Пайдаланушы профилі"
+msgstr ""
 
 #: users/templates/profile.html:11
 msgid "Текущий IQ"
-msgstr "Ағымдағы IQ"
+msgstr ""
 
 #: users/templates/profile.html:12
 msgid "Базовый"
-msgstr "Негіз"
+msgstr ""
 
 #: users/templates/profile.html:15
 msgid "Редактировать данные"
-msgstr "Деректерді өңдеу"
+msgstr ""
 
 #: users/templates/profile.html:18
 msgid "Сменить пароль"
-msgstr "Құпия сөзді өзгерту"
+msgstr ""
 
 #: users/templates/profile.html:24
 msgid "История тестов"
-msgstr "Сынақ тарихы"
+msgstr ""
 
 #: users/templates/profile.html:28
 msgid "Тест"
-msgstr "Тесттер"
+msgstr ""
 
 #: users/templates/profile.html:29
 msgid "Баллы"
-msgstr "Ұпайлар"
+msgstr ""
 
 #: users/templates/profile.html:30
 msgid "Дата"
-msgstr "Күн"
+msgstr ""
 
 #: users/templates/profile.html:42
 msgid "Вы еще не проходили тесты."
-msgstr "Сіз әлі ешқандай сынақтан өткен жоқсыз."
+msgstr ""
 
 #: users/templates/registration/password_change_done.html:6
 msgid "Успешно!"
-msgstr "Сәтті!"
+msgstr ""
 
 #: users/templates/registration/password_change_done.html:7
 msgid "Ваш пароль был успешно изменен."
-msgstr "Құпия сөзіңіз сәтті өзгертілді."
+msgstr ""
 
 #: users/templates/registration/password_change_done.html:9
-#, fuzzy
-#| msgid "Вернуться назад"
 msgid "Вернуться в профиль"
-msgstr "Қайтып келу"
+msgstr ""
 
 #: users/templates/registration/password_change_form.html:7
 msgid "Смена пароля"
-msgstr "Құпия сөзді өзгерту"
+msgstr ""
 
 #: users/templates/registration/password_change_form.html:11
 msgid "Поменять пароль"
-msgstr "Құпия сөзді өзгерту"
+msgstr ""
 
 #: users/templates/users/edit_profile.html:8
 msgid "Редактирование профиля"
-msgstr "Профильді өңдеу"
+msgstr ""
 
 #: users/templates/users/edit_profile.html:24
 msgid "Сохранить изменения"
-msgstr "Өзгерістерді сақтау"
+msgstr ""
 
 #: users/templates/users/edit_profile.html:25
 msgid "Отмена"
-msgstr "Болдырмау"
+msgstr ""
 
 #: venv/lib/python3.10/site-packages/django/contrib/messages/apps.py:16
 msgid "Messages"

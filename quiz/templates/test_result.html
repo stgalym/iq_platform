@@ -1,20 +1,74 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Результат</title>
-</head>
-<body>
-    <h1>Тест завершен!</h1>
-    <h2>{% trans "Ваш результат": {{ score }} из {{ total }} %}</h2>
+{% extends 'base.html' %}
+{% load i18n %}
 
-    <p>
-        {% if score == total %}
-            {% trans "Поздравляем! Идеальный результат!" %} 
-        {% else %}
-            {% trans "Хорошая попытка, но можно лучше." %}
-        {% endif %}
-    </p>
+{% block content %}
+<div class="container">
+    <div class="text-center mb-5">
+        <h1 class="display-5">{% trans "Результат тестирования" %}</h1>
+        <h2>{{ test.title }}</h2>
+        <h3 class="mt-3">
+            {% trans "Ваш счет:" %} 
+            <span class="badge bg-success">{{ score }} / {{ total }}</span>
+        </h3>
+    </div>
 
-    <a href="{% url 'home' %}"><button>{% trans "Вернуться к списку тестов" %}</button></a>
-</body>
-</html>
+    {% if ai_analysis %}
+        <div class="card border-info mb-5 shadow-sm">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">🤖 {% trans "Анализ Искусственного Интеллекта" %}</h5>
+            </div>
+            <div class="card-body">
+                <p class="card-text" style="white-space: pre-line; font-size: 1.1em;">{{ ai_analysis }}</p>
+            </div>
+        </div>
+    {% endif %}
+
+    {% if user_answers %}
+        <h4 class="mb-3">{% trans "Детальный разбор:" %}</h4>
+        <div class="table-responsive">
+            <table class="table table-bordered">
+                <thead class="table-light">
+                    <tr>
+                        <th>#</th>
+                        <th>{% trans "Вопрос" %}</th>
+                        <th>{% trans "Ваш ответ" %}</th>
+                        <th>{% trans "Статус" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in user_answers %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>
+                            {{ item.question.text }}
+                            {% if item.question.image %}
+                                <br><small class="text-muted">({% trans "с картинкой" %})</small>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if item.selected_answer %}
+                                {{ item.selected_answer.text }}
+                            {% else %}
+                                <em class="text-muted">{% trans "Нет ответа" %}</em>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if item.is_correct %}
+                                <span class="text-success">✅ {% trans "Верно" %}</span>
+                            {% else %}
+                                <span class="text-danger">❌ {% trans "Ошибка" %}</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endif %}
+
+    <div class="text-center mt-4 mb-5">
+        <a href="{% url 'profile' %}" class="btn btn-primary btn-lg">{% trans "В личный кабинет" %}</a>
+        <a href="{% url 'home' %}" class="btn btn-outline-secondary btn-lg">{% trans "К списку тестов" %}</a>
+    </div>
+</div>
+{% endblock %}

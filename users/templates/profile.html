@@ -1,37 +1,71 @@
 {% extends 'base.html' %}
-
+{% load i18n %}
 {% block content %}
     <div class="card">
         <div class="card-header">
-            Профиль пользователя
+            {% trans "Профиль пользователя" %}
         </div>
         <div class="card-body">
             <h5 class="card-title">{{ user.username }}</h5>
             <p class="card-text">Email: {{ user.email }}</p>
-            <p class="card-text">Текущий IQ: <strong>{{ user.iq_score|default:"Не определен" }}</strong></p>
-            <p>Статус: {% if user.is_premium %}Premium{% else %}Базовый{% endif %}</p>
-        </div>
+            <p class="card-text">{% trans "Текущий IQ" %}: <strong>{{ user.iq_score|default:"Не определен" }}</strong></p>
+            <p>
+                {% trans "Статус:" %} 
+                {% if user.is_premium %}
+                    <span class="badge bg-warning text-dark">PREMIUM 👑</span>
+                {% else %}
+                    <span class="badge bg-secondary">{% trans "Базовый" %}</span>
+                    <a href="{% url 'buy_premium' %}" class="btn btn-sm btn-success ms-2">
+                        {% trans "Купить Premium" %}
+                    </a>
+                {% endif %}
+            </p>
+            <div class="mt-3">
+                <a href="{% url 'edit_profile' %}" class="btn btn-outline-primary btn-sm">
+                    {% trans "Редактировать данные" %}
+                </a>
+                <a href="{% url 'password_change' %}" class="btn btn-outline-warning btn-sm">
+                    {% trans "Сменить пароль" %}
+                </a>
+            </div>
+            <div class="alert alert-info mt-3">
+                {% if user.telegram_chat_id %}
+                    <strong>✅ Telegram подключен!</strong>
+                {% else %}
+                    <p>Чтобы получать задания в Telegram:</p>
+                    1. Найдите бота <strong>@iq120Plus_bot</strong><br>
+                    2. Нажмите Start<br>
+                    3. Отправьте ему команду: 
+                    <h3 class="text-center">/start {{ user.telegram_code }}</h3>
+                {% endif %}
+            </div>
     </div>
-
-    <h3 class="mt-4">История тестов</h3>
-    <table class="table">
+    <h3 class="mt-4">{% trans "История тестов" %}</h3>
+    <table class="table table-hover">
         <thead>
             <tr>
-                <th>Тест</th>
-                <th>Баллы</th>
-                <th>Дата</th>
-            </tr>
+                <th>{% trans "Тест" %}</th>
+                <th>{% trans "Баллы" %}</th>
+                <th>{% trans "Дата" %}</th>
+                <th>{% trans "Детали" %}</th> </tr>
         </thead>
         <tbody>
             {% for res in results %}
             <tr>
                 <td>{{ res.test.title }}</td>
-                <td>{{ res.score }}</td>
+                <td>
+                    <span class="badge bg-primary rounded-pill">{{ res.score }}</span>
+                </td>
                 <td>{{ res.date_taken|date:"d.m.Y H:i" }}</td>
+                <td>
+                    <a href="{% url 'result_detail' res.id %}" class="btn btn-sm btn-outline-info">
+                        👁️ {% trans "Отчет" %}
+                    </a>
+                </td>
             </tr>
             {% empty %}
             <tr>
-                <td colspan="3">Вы еще не проходили тесты.</td>
+                <td colspan="4" class="text-center text-muted">{% trans "Вы еще не проходили тесты." %}</td>
             </tr>
             {% endfor %}
         </tbody>
