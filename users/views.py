@@ -42,17 +42,3 @@ def edit_profile(request):
         form = CustomUserUpdateForm(instance=request.user)
     
     return render(request, 'users/edit_profile.html', {'form': form})
-
-@login_required
-def buy_premium(request):
-    if request.method == 'POST':
-        # Здесь в будущем будет проверка от банка
-        # А пока мы просто верим пользователю на слово :)
-        
-        request.user.is_premium = True
-        request.user.save()
-        
-        messages.success(request, "Поздравляем! Premium активирован.")
-        return redirect('profile')
-    
-    return render(request, 'users/buy_premium.html')
