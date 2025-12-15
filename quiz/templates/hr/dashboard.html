@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>💼 {% trans "Кабинет рекрутера" %}</h2>
+    <p class="text-muted">{% trans "Управление приглашениями кандидатов" %}</p>
+
+    <div class="card p-4 mb-4 shadow-sm">
+        <h5>{% trans "Создать новое приглашение" %}</h5>
+        <form method="post" class="row g-3">
+            {% csrf_token %}
+            <div class="col-md-6">
+                <label class="form-label">Email кандидата</label>
+                <input type="email" name="candidate_email" class="form-control" required placeholder="candidate@example.com">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Выберите тест</label>
+                <select name="test_id" class="form-select">
+                    {% for test in tests %}
+                    <option value="{{ test.id }}">{{ test.title }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100">Создать</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-dark">
+                <tr>
+                    <th>Дата</th>
+                    <th>Email</th>
+                    <th>Тест</th>
+                    <th>Ссылка (Копировать)</th>
+                    <th>Статус</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for invite in invitations %}
+                <tr>
+                    <td>{{ invite.created_at|date:"d.m.Y H:i" }}</td>
+                    <td>{{ invite.candidate_email }}</td>
+                    <td>{{ invite.test.title }}</td>
+                    
+                    <td>
+                        <div class="input-group input-group-sm">
+                            <input type="text" class="form-control" 
+                                   value="{{ request.scheme }}://{{ request.get_host }}{% url 'accept_invitation' invite.uuid %}" 
+                                   readonly id="link-{{ invite.id }}">
+                            <button class="btn btn-outline-secondary" type="button" 
+                                    onclick="copyLink('link-{{ invite.id }}')">
+                                📋
+                            </button>
+                        </div>
+                    </td>
+                    
+                    <td>
+                        {% if invite.completed %}
+                            <span class="badge bg-success">✅ Пройден</span>
+                            {% if invite.result %}
+                                <a href="{% url 'result_detail' invite.result.id %}" class="btn btn-sm btn-link">
+                                    Смотреть
+                                </a>
+                            {% endif %}
+                        {% else %}
+                            <span class="badge bg-warning text-dark">⏳ Ожидание</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="text-center text-muted py-3">Приглашений пока нет</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+function copyLink(elementId) {
+    var copyText = document.getElementById(elementId);
+    copyText.select();
+    copyText.setSelectionRange(0, 99999); 
+    navigator.clipboard.writeText(copyText.value);
+    alert("Ссылка скопирована: " + copyText.value);
+}
+</script>
+{% endblock %}

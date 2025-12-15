@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container text-center mt-5">
+    <h1>Доступ ограничен 🔒</h1>
+    <p class="lead">{{ message }}</p>
+    
+    <div class="card mt-4 p-4 shadow-lg border-primary mx-auto" style="max-width: 500px;">
+        <h3>Купить подписку: {{ tier_name }}</h3>
+        
+        {% if tier_name == 'Pro' %}
+            <a href="{% url 'upgrade_profile' 'pro' %}" class="btn btn-success btn-lg mt-3">Купить Pro (0 руб)</a>
+        {% elif tier_name == 'HR Recruiter' %}
+             <a href="{% url 'upgrade_profile' 'hr' %}" class="btn btn-warning btn-lg mt-3">Купить HR (0 руб)</a>
+        {% endif %}
+        
+        <p class="text-muted mt-2 small">* Демо-режим: списание не производится</p>
+    </div>
+    <a href="{% url 'home' %}" class="btn btn-link mt-3">На главную</a>
+</div>
+{% endblock %}

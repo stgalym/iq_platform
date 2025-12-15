@@ -1,53 +1,128 @@
-{% load i18n %}
 <!DOCTYPE html>
-<html lang="ru">
+{% load static %}
+{% load i18n %} <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>IQ Project</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IQ System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        main {
+            flex: 1;
+        }
+    </style>
 </head>
-<body class="container mt-4">
+<body>
 
-    <nav class="navbar navbar-expand-lg navbar-light bg-light mb-4">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="{% url 'home' %}">IQ System</a>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="{% url 'home' %}">🧠 IQ System</a>
             
-            <div class="navbar-nav">
-                <a class="nav-link" href="{% url 'home' %}">{% trans "Тесты" %}</a>
-                
-                {% if user.is_authenticated %}
-                    <a class="nav-link" href="{% url 'profile' %}">{% trans "Личный кабинет" %} ({{ user.username }})</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarCollapse">
+                <ul class="navbar-nav ms-auto mb-2 mb-lg-0 align-items-center">
                     
-                    <form action="{% url 'logout' %}" method="post" class="d-inline">
-                        {% csrf_token %}
-                        <button type="submit" class="btn btn-link nav-link" style="border:none; background:none;">{% trans "Выход" %}</button>
-                    </form>
-                {% else %}
-                    <a class="nav-link" href="{% url 'login' %}">{% trans "Войти" %}</a>
-                    <a class="nav-link" href="{% url 'register' %}">{% trans "Регистрация" %}</a>
-                {% endif %}
-                <form action="{% url 'set_language' %}" method="post" class="d-flex align-items-center ms-3">
-                    {% csrf_token %}
-                    <input name="next" type="hidden" value="{{ redirect_to }}">
+                    {% get_current_language as LANGUAGE_CODE %}
+                    {% get_available_languages as LANGUAGES %}
+                    {% get_language_info_list for LANGUAGES as languages %}
                     
-                    <select name="language" class="form-select form-select-sm" onchange="this.form.submit()">
-                        {% get_current_language as LANGUAGE_CODE %}
-                        {% get_available_languages as LANGUAGES %}
-                        {% get_language_info_list for LANGUAGES as languages %}
+                    <li class="nav-item dropdown me-3">
+                        <a class="nav-link dropdown-toggle text-uppercase" href="#" id="langDropdown" role="button" data-bs-toggle="dropdown">
+                            🌍 {{ LANGUAGE_CODE }}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="langDropdown">
+                            {% for language in languages %}
+                            <li>
+                                <form action="{% url 'set_language' %}" method="post">
+                                    {% csrf_token %}
+                                    <input name="next" type="hidden" value="{{ redirect_to }}">
+                                    <input name="language" type="hidden" value="{{ language.code }}">
+                                    <button type="submit" class="dropdown-item">
+                                        {{ language.name_local }} ({{ language.code|upper }})
+                                    </button>
+                                </form>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </li>
+
+                    {% if user.is_authenticated %}
                         
-                        {% for language in languages %}
-                            <option value="{{ language.code }}"{% if language.code == LANGUAGE_CODE %} selected{% endif %}>
-                                {{ language.code|upper }}
-                            </option>
-                        {% endfor %}
-                    </select>
-                </form>
+                        <li class="nav-item">
+                            {% if user.profile.plan == 'hr' or user.is_superuser %}
+                                <a class="nav-link fw-bold text-warning" href="{% url 'hr_dashboard' %}">
+                                    💼 HR Кабинет
+                                </a>
+                            {% endif %}
+                        </li>
+
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle active" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
+                                {{ user.username }}
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><a class="dropdown-item" href="{% url 'profile' %}">👤 Мой профиль</a></li>
+                                
+                                <li>
+                                    <span class="dropdown-item-text text-muted small">
+                                        Тариф: {{ user.profile.get_plan_display|default:"Free" }}
+                                    </span>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <form action="{% url 'logout' %}" method="post" class="d-inline">
+                                        {% csrf_token %}
+                                        <button type="submit" class="dropdown-item text-danger">Выход</button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </li>
+
+                    {% else %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'login' %}">Войти</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link btn btn-outline-light ms-2 btn-sm" href="{% url 'register' %}">Регистрация</a>
+                        </li>
+                    {% endif %}
+                </ul>
             </div>
         </div>
     </nav>
 
-    {% block content %}
-    {% endblock %}
+    <main class="container">
+        {% if messages %}
+            <div class="row justify-content-center">
+                <div class="col-md-8">
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
 
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <footer class="bg-light text-center text-lg-start mt-5 border-top">
+        <div class="text-center p-3 text-muted">
+            © 2025 IQ System Project.
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

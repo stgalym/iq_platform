@@ -11,4 +11,4 @@ class CustomUserUpdateForm(forms.ModelForm):
     class Meta:
         model = CustomUser
         # Добавляем bot_category в список полей
-        fields = ('first_name', 'last_name', 'email', 'bot_category')
+        fields = ('first_name', 'last_name', 'email', 'bot_category', 'language')

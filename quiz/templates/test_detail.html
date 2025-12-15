@@ -21,11 +21,23 @@
             <div class="card-header d-flex justify-content-between align-items-center">
                 <div>
                     {% if question.exposure_time == 0 %}
-                        <span class="fs-5">{{ question.text }}</span>
+                        <span class="fs-5">
+                            {% get_current_language as LANGUAGE_CODE %}
+                            {% if LANGUAGE_CODE == 'ru' %}{{ question.text_ru }}
+                            {% elif LANGUAGE_CODE == 'kk' %}{{ question.text_kk }}
+                            {% else %}{{ question.text_en }}
+                            {% endif %}
+                        </span>
                     {% else %}
-                        <span class="question-text fs-5" style="display:none;">{{ question.text }}</span>
+                        <span class="question-text fs-5" style="display:none;">
+                            {% get_current_language as LANGUAGE_CODE %}
+                            {% if LANGUAGE_CODE == 'ru' %}{{ question.text_ru }}
+                            {% elif LANGUAGE_CODE == 'kk' %}{{ question.text_kk }}
+                            {% else %}{{ question.text_en }}
+                            {% endif %}
+                        </span>
                         <span class="memory-hint text-danger fw-bold fs-5">
-                            👁️ ЗАПОМНИТЕ КАРТИНКУ! ({{ question.exposure_time }} сек)
+                            👁️ {% trans "ЗАПОМНИТЕ КАРТИНКУ!" %} ({{ question.exposure_time }} c)
                         </span>
                     {% endif %}
                 </div>
@@ -41,20 +53,29 @@
 
                 <div id="answers-block" {% if question.exposure_time > 0 %}style="display:none"{% endif %}>
                     <div class="list-group">
-                        {% for answer in question.answers.all %}
+                        {% for answer in answers_list %}
                             <label class="list-group-item list-group-item-action">
                                 <input class="form-check-input me-2" 
                                        type="radio" 
                                        name="selected_answer" 
                                        value="{{ answer.id }}"
-                                       {% if current_answer_id == answer.id %}checked{% endif %}
-                                       onchange="autoSubmitIfMemory('{{ question.exposure_time }}')"> 
-                                       {{ answer.text }}
+                                       {% if current_answer_id == answer.id %}checked{% endif %}>
+                                
+                                {% get_current_language as LANGUAGE_CODE %}
+                                {% if LANGUAGE_CODE == 'ru' %}{{ answer.text_ru }}
+                                {% elif LANGUAGE_CODE == 'kk' %}{{ answer.text_kk }}
+                                {% else %}{{ answer.text_en }}
+                                {% endif %}
                             </label>
                         {% endfor %}
                     </div>
                 </div>
             </div>
+        </div>
+
+        <div id="loading-message" class="alert alert-warning text-center" style="display: none;">
+            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+            <strong>{% trans "Пожалуйста, подождите. Ваши ответы обрабатываются..." %}</strong>
         </div>
 
         <div class="d-flex justify-content-between mt-4">
@@ -70,7 +91,7 @@
             {% endif %}
 
             {% if is_last %}
-                <button type="submit" name="action" value="finish" class="btn btn-success btn-lg px-5">
+                <button type="submit" name="action" value="finish" id="finishBtn" class="btn btn-success btn-lg px-5">
                     {% trans "Завершить тест" %} ✅
                 </button>
             {% else %}
@@ -85,7 +106,39 @@
 <script>
 document.addEventListener("DOMContentLoaded", function() {
     
-    // 1. ЛОГИКА ПАМЯТИ (Для одного вопроса)
+    // --- 1. ЗАЩИТА ОТ ДВОЙНОГО КЛИКА НА "ЗАВЕРШИТЬ" ---
+    const form = document.getElementById('quizForm');
+    
+    form.addEventListener('submit', function(e) {
+        // Проверяем, какая кнопка была нажата (через submitter)
+        const submitter = e.submitter;
+        
+        // Если нажали "Завершить"
+        if (submitter && submitter.value === 'finish') {
+            
+            // Если уже нажато - отменяем повторную отправку
+            if (submitter.classList.contains('disabled')) {
+                e.preventDefault();
+                return;
+            }
+
+            // Блокируем кнопку
+            submitter.classList.add('disabled'); // Визуально
+            submitter.style.pointerEvents = 'none'; // Физически
+            
+            // Меняем текст кнопки
+            const originalText = submitter.innerHTML;
+            submitter.innerHTML = '<span class="spinner-border spinner-border-sm"></span> {% trans "Обработка..." %}';
+            
+            // Показываем сообщение
+            document.getElementById('loading-message').style.display = 'block';
+            
+            // Форма отправится сама, так как мы не делали e.preventDefault() в первый раз
+        }
+    });
+
+
+    // --- 2. ЛОГИКА ПАМЯТИ ---
     const exposureTime = {{ question.exposure_time }};
     
     if (exposureTime > 0) {
@@ -98,7 +151,7 @@ document.addEventListener("DOMContentLoaded", function() {
         
         const memoryTimer = setInterval(() => {
             timeLeft--;
-            if (hintSpan) hintSpan.innerText = `👁️ ЗАПОМНИТЕ КАРТИНКУ! (${timeLeft} сек)`;
+            if (hintSpan) hintSpan.innerText = `👁️ {% trans "ЗАПОМНИТЕ КАРТИНКУ!" %} (${timeLeft} c)`;
             
             if (timeLeft <= 0) {
                 clearInterval(memoryTimer);
@@ -111,7 +164,7 @@ document.addEventListener("DOMContentLoaded", function() {
         }, 1000);
     }
 
-    // 2. ОБЩИЙ ТАЙМЕР (Нужно хранить время в localStorage, чтобы не сбрасывалось при переходе)
+    // --- 3. ОБЩИЙ ТАЙМЕР ---
     {% if test.time_limit > 0 %}
         const testId = "{{ test.id }}";
         const totalMinutes = {{ test.time_limit }};
@@ -119,7 +172,6 @@ document.addEventListener("DOMContentLoaded", function() {
         
         let endTime = localStorage.getItem(storageKey);
         
-        // Если таймера нет или он старый - создаем новый
         if (!endTime || new Date().getTime() > endTime) {
             const now = new Date().getTime();
             endTime = now + (totalMinutes * 60 * 1000);
@@ -135,28 +187,32 @@ document.addEventListener("DOMContentLoaded", function() {
             const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
             const seconds = Math.floor((distance % (1000 * 60)) / 1000);
             
-            timerEl.innerHTML = minutes + "м " + seconds + "с";
+            timerEl.innerHTML = minutes + ":" + (seconds < 10 ? "0" + seconds : seconds);
             
             if (distance < 0) {
                 clearInterval(interval);
-                alert("Время вышло!");
-                // Создаем скрытое поле action=finish и отправляем
-                const form = document.getElementById('quizForm');
+                alert("{% trans 'Время вышло!' %}");
+                
+                // Авто-отправка
                 const input = document.createElement('input');
                 input.type = 'hidden';
                 input.name = 'action';
                 input.value = 'finish';
                 form.appendChild(input);
+                
+                // Показываем лоадер перед отправкой
+                document.getElementById('loading-message').style.display = 'block';
+                
                 form.submit();
-                localStorage.removeItem(storageKey); // Чистим
+                localStorage.removeItem(storageKey);
             }
         }, 1000);
         
-        // При завершении теста нужно очистить localStorage (добавим на кнопку finish)
-        const finishBtns = document.querySelectorAll('button[value="finish"]');
-        finishBtns.forEach(btn => {
-            btn.addEventListener('click', () => localStorage.removeItem(storageKey));
-        });
+        // Очистка таймера при ручном завершении
+        const finishBtn = document.getElementById('finishBtn');
+        if (finishBtn) {
+            finishBtn.addEventListener('click', () => localStorage.removeItem(storageKey));
+        }
     {% endif %}
 });
 </script>

@@ -1,5 +1,8 @@
+import uuid
 from django.db import models
 from django.conf import settings
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 
 # Категории
 CATEGORY_CHOICES = [
@@ -8,6 +11,13 @@ CATEGORY_CHOICES = [
     ('spatial', 'Пространственное мышление'),
     ('memory', 'Память'),
 ]
+
+# Определяем 3 уровня подписки
+PLAN_CHOICES = (
+    ('free', 'Free (1 тест)'),
+    ('pro', 'Pro (Все тесты)'),
+    ('hr', 'HR (Рекрутер)'),
+)
 
 class Test(models.Model):
     title = models.CharField(max_length=200, verbose_name="Название")
@@ -66,7 +76,7 @@ class Answer(models.Model):
         verbose_name_plural = "Ответы"
 
 class UserTestResult(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True, blank=True)
     test = models.ForeignKey(Test, on_delete=models.CASCADE)
     score = models.IntegerField(verbose_name="Баллы")
     ai_analysis = models.TextField(blank=True, null=True, verbose_name="Анализ ИИ")
@@ -91,3 +101,45 @@ class BotResult(models.Model):
 
     def __str__(self):
         return f"{self.user} - {self.question} - {self.is_correct}"
+
+class TestInvitation(models.Model):
+    # Кто отправил (Рекрутер)
+    recruiter = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='sent_invitations')
+    # Какой тест проходить
+    test = models.ForeignKey(Test, on_delete=models.CASCADE)
+    # Кому (Email кандидата - просто текстом, так как он может быть еще не зарегистрирован)
+    candidate_email = models.EmailField(verbose_name="Email кандидата")
+    
+    # Уникальный код ссылки (чтобы нельзя было подделать)
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    
+    # Статус
+    completed = models.BooleanField(default=False, verbose_name="Прошел?")
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    # Ссылка на результат (появится, когда кандидат пройдет тест)
+    result = models.ForeignKey(UserTestResult, on_delete=models.SET_NULL, null=True, blank=True, related_name='invitation')
+
+    def __str__(self):
+        return f"Invite for {self.candidate_email} to {self.test.title}"
+    
+class UserProfile(models.Model):
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='profile')
+    plan = models.CharField(max_length=10, choices=PLAN_CHOICES, default='free')
+    
+    def __str__(self):
+        return f"{self.user.username} - {self.get_plan_display()}"
+
+# Сигналы для автоматического создания профиля при регистрации
+@receiver(post_save, sender=settings.AUTH_USER_MODEL)
+def create_user_profile(sender, instance, created, **kwargs):
+    if created:
+        UserProfile.objects.create(user=instance)
+
+@receiver(post_save, sender=settings.AUTH_USER_MODEL)
+def save_user_profile(sender, instance, **kwargs):
+    # try/except нужен на случай, если профиль уже есть
+    try:
+        instance.profile.save()
+    except UserProfile.DoesNotExist:
+        UserProfile.objects.create(user=instance)
