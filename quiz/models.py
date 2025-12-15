@@ -3,7 +3,7 @@ from django.db import models
 from django.conf import settings
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-
+from django.utils.translation import gettext_lazy as _ # Для перевода
 # Категории
 CATEGORY_CHOICES = [
     ('logic', 'Логика'),
@@ -14,9 +14,9 @@ CATEGORY_CHOICES = [
 
 # Определяем 3 уровня подписки
 PLAN_CHOICES = (
-    ('free', 'Free (1 тест)'),
-    ('pro', 'Pro (Все тесты)'),
-    ('hr', 'HR (Рекрутер)'),
+    ('free', _('Free (1 тест)')),
+    ('pro', _('Pro (Все тесты)')),
+    ('hr', _('HR (Рекрутер)')),
 )
 
 class Test(models.Model):
