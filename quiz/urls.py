@@ -1,5 +1,6 @@
 from django.urls import path
 from . import views
+from quiz.views import telegram_webhook  # Импорт нового view
 
 urlpatterns = [
     path('', views.home, name='home'),
@@ -9,4 +10,5 @@ urlpatterns = [
     path('hr/dashboard/', views.hr_dashboard, name='hr_dashboard'),
     path('invite/<uuid:uuid>/', views.accept_invitation, name='accept_invitation'),
     path('upgrade/<str:plan_type>/', views.upgrade_profile, name='upgrade_profile'),
+    path('webhook/telegram/', telegram_webhook, name='telegram_webhook'),
 ]

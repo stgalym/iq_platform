@@ -1,3 +1,5 @@
+import json
+import logging
 import random # <--- Тот самый потерянный импорт
 from django.shortcuts import render, get_object_or_404, redirect
 from django.utils import timezone
@@ -6,11 +8,38 @@ from django.contrib.auth import logout
 from django.utils.translation import get_language
 from django.utils.translation import gettext as _ # Импорт для переводов внутри Python
 from django.contrib import messages
-
+from django.http import HttpResponse, JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from aiogram.types import Update
+from .telegram_bot import dp, bot  # Импортируем из нового файла
 # Импорт моделей
 from .models import Test, Question, Answer, UserTestResult, UserAnswer, TestInvitation, UserProfile
 # Импорт сервиса ИИ
 from .ai_service import generate_iq_report
+
+logger = logging.getLogger(__name__)
+@csrf_exempt
+async def telegram_webhook(request):
+    """
+    Обработчик вебхуков от Telegram.
+    """
+    if request.method == "POST":
+        try:
+            # Получаем JSON из запроса
+            data = json.loads(request.body)
+            # Превращаем JSON в объект Update aiogram
+            update = Update.model_validate(data)
+            
+            # Скармливаем обновление диспетчеру aiogram
+            # feed_update сам вызовет нужный хендлер
+            await dp.feed_update(bot, update)
+            
+            return JsonResponse({"status": "ok"})
+        except Exception as e:
+            logger.error(f"Telegram Webhook Error: {e}")
+            return JsonResponse({"status": "error", "message": str(e)}, status=500)
+            
+    return HttpResponse("Bot is active. Use POST to send updates.")
 
 # --- 1. ГЛАВНАЯ (HOME) ---
 def home(request):
