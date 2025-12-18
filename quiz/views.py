@@ -10,8 +10,9 @@ from django.utils.translation import gettext as _ # Импорт для пере
 from django.contrib import messages
 from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
+from aiogram import Bot
 from aiogram.types import Update
-from .telegram_bot import dp, bot  # Импортируем из нового файла
+from .telegram_bot import dp  # Импортируем из нового файла
 # Импорт моделей
 from .models import Test, Question, Answer, UserTestResult, UserAnswer, TestInvitation, UserProfile
 # Импорт сервиса ИИ
@@ -25,19 +26,29 @@ async def telegram_webhook(request):
     """
     if request.method == "POST":
         try:
-            # Получаем JSON из запроса
-            data = json.loads(request.body)
-            # Превращаем JSON в объект Update aiogram
-            update = Update.model_validate(data)
-            
-            # Скармливаем обновление диспетчеру aiogram
-            # feed_update сам вызовет нужный хендлер
-            await dp.feed_update(bot, update)
+            # 1. Получаем токен
+            token = os.getenv('TELEGRAM_TOKEN')
+            if not token:
+                return JsonResponse({"error": "Token not found"}, status=500)
+
+            # 2. Создаем бота ТОЛЬКО на время этого запроса
+            # Использование 'async with' гарантирует, что сессия закроется правильно
+            async with Bot(token=token) as bot:
+                # 3. Читаем данные от Телеграм
+                data = json.loads(request.body)
+                update = Update.model_validate(data)
+                
+                # 4. Передаем обновление в диспетчер
+                # feed_update сам найдет нужный хендлер в telegram_bot.py
+                await dp.feed_update(bot, update)
             
             return JsonResponse({"status": "ok"})
+            
         except Exception as e:
+            # Логируем ошибку, чтобы видеть её в Render Logs
             logger.error(f"Telegram Webhook Error: {e}")
-            return JsonResponse({"status": "error", "message": str(e)}, status=500)
+            # Возвращаем 200 OK даже при ошибке логики, чтобы Телеграм не долбил нас повторами
+            return JsonResponse({"status": "error", "message": str(e)}, status=200)
             
     return HttpResponse("Bot is active. Use POST to send updates.")
 

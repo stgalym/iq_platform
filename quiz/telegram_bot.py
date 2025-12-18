@@ -11,7 +11,6 @@ from quiz.models import Question, Answer, BotResult
 # Инициализация
 TOKEN = os.getenv('TELEGRAM_TOKEN')
 # ВАЖНО: для вебхука убираем таймауты или делаем их дефолтными
-bot = Bot(token=TOKEN)
 dp = Dispatcher()
 
 # --- СЛОВАРЬ ПЕРЕВОДОВ ДЛЯ БОТА ---
