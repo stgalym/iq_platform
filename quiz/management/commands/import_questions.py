@@ -16,13 +16,13 @@ class Command(BaseCommand):
         
         # Создаем тест (заголовки на 3 языках)
         main_test, _ = Test.objects.get_or_create(
-            title_ru="Таблица умножения (Мультиязычный)",
-            title_kk="Көбейту кестесі (Көптілді)",
-            title_en="Multiplication table (Multilingual)",
+            title_ru="Тест iq (Мультиязычный)",
+            title_kk="Iq сынағы (Көптілді)",
+            title_en="iq test (Multilingual)",
             defaults={
-                'description_ru': 'Таблица умножения на трех языках.',
-                'description_kk': 'Көбейту кестесі',
-                'description_en': 'Multiplication table ',
+                'description_ru': 'Тест iq на трех языках.',
+                'description_kk': 'Iq сынағы ',
+                'description_en': 'iq test ',
                 'questions_count': 96,
                 'time_limit': 60
             }
