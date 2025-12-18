@@ -1,6 +1,7 @@
 import json
 import logging
 import random # <--- Тот самый потерянный импорт
+import os
 from django.shortcuts import render, get_object_or_404, redirect
 from django.utils import timezone
 from django.contrib.auth.decorators import login_required
