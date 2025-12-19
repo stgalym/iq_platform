@@ -220,17 +220,21 @@ def finish_test(request, test, question_ids, saved_answers):
     score = 0
     category_stats = {}
     
-    # Определяем пользователя (если он вошел) или None (если Кандидат по ссылке)
     user = request.user if request.user.is_authenticated else None
     
-    # Создаем запись результата
+    # Создаем общий результат
     result_obj = UserTestResult.objects.create(user=user, test=test, score=0)
     
-    # Подсчет баллов
+    # 1. ОПТИМИЗАЦИЯ: Загружаем ВСЕ вопросы разом (1 запрос к БД)
+    # in_bulk возвращает словарь {id: QuestionObj}
+    questions_map = Question.objects.in_bulk(question_ids)
+    
+    user_answers_to_create = [] # Список для массового создания
+    
     for q_id in question_ids:
-        try:
-            question = Question.objects.get(pk=q_id)
-        except Question.DoesNotExist:
+        # Берем вопрос из памяти, а не из БД
+        question = questions_map.get(q_id)
+        if not question:
             continue
 
         ans_id = saved_answers.get(str(q_id))
@@ -238,6 +242,8 @@ def finish_test(request, test, question_ids, saved_answers):
         is_correct = False
         
         if ans_id:
+            # Тут тоже можно оптимизировать, но пока оставим get, 
+            # так как ответы выбираются редко (по 1 на вопрос)
             selected_answer = Answer.objects.filter(pk=ans_id).first()
             if selected_answer and selected_answer.is_correct:
                 is_correct = True
@@ -245,55 +251,54 @@ def finish_test(request, test, question_ids, saved_answers):
                 cat = question.get_category_display()
                 category_stats[cat] = category_stats.get(cat, 0) + 1
         
-        # Сохраняем детальный ответ
-        UserAnswer.objects.create(
+        # Вместо создания записи сразу, добавляем её в список
+        user_answers_to_create.append(UserAnswer(
             result=result_obj,
             question=question,
             selected_answer=selected_answer,
             is_correct=is_correct
-        )
+        ))
+
+    # 2. ОПТИМИЗАЦИЯ: Сохраняем ВСЕ ответы одним запросом (1 запрос к БД)
+    if user_answers_to_create:
+        UserAnswer.objects.bulk_create(user_answers_to_create)
 
     # Обновляем итоговый балл
     result_obj.score = score
     
     # Генерируем AI отчет
+    # ВАЖНО: Если ИИ думает дольше 20-25 секунд, таймаут все равно может случиться.
+    # В идеале это нужно выносить в фоновые задачи (Celery), но пока попробуем так.
     current_lang = get_language()
     username_for_ai = user.username if user else "Candidate"
     
-    # Внимание: убедитесь, что функция generate_iq_report у вас работает корректно
-    result_obj.ai_analysis = generate_iq_report(username_for_ai, category_stats, score, language=current_lang)
+    try:
+        result_obj.ai_analysis = generate_iq_report(username_for_ai, category_stats, score, language=current_lang)
+    except Exception as e:
+        print(f"AI Error: {e}")
+        result_obj.ai_analysis = "Анализ временно недоступен / Analysis currently unavailable"
+        
     result_obj.save()
     
-    # Очищаем сессию от данных этого теста
+    # Очищаем сессию
     keys = [f'test_{test.id}_order', f'test_{test.id}_index', f'test_{test.id}_answers', f'test_{test.id}_locked']
     for k in keys:
         if k in request.session:
             del request.session[k]
 
-    # === РАЗВИЛКА: КАНДИДАТ или ПОЛЬЗОВАТЕЛЬ ===
-    
+    # Логика редиректа
     invite_id = request.session.get('active_invitation_id')
-    
     if invite_id:
-        # СЦЕНАРИЙ 1: Это кандидат по ссылке
         try:
             invite = TestInvitation.objects.get(pk=invite_id)
             invite.result = result_obj
             invite.completed = True
             invite.save()
-            
-            # Удаляем ID приглашения, чтобы сессия стала чистой
             del request.session['active_invitation_id']
-            
-            # Показываем "Спасибо" (кандидат не видит баллы)
             return render(request, 'candidate_success.html')
-            
         except TestInvitation.DoesNotExist:
-            # Если приглашение не найдено (странная ситуация), показываем как обычному юзеру
             pass
 
-    # СЦЕНАРИЙ 2: Это обычный пользователь (видит свои баллы)
-    # Используем redirect, чтобы при обновлении страницы тест не отправлялся заново
     return redirect('result_detail', result_id=result_obj.id)
 
 # --- 4. ПРОСМОТР РЕЗУЛЬТАТА ---
