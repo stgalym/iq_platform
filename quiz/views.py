@@ -17,7 +17,7 @@ from .telegram_bot import dp  # Импортируем из нового фай�
 # Импорт моделей
 from .models import Test, Question, Answer, UserTestResult, UserAnswer, TestInvitation, UserProfile
 # Импорт сервиса ИИ
-from .ai_service import generate_iq_report
+from .ai_service import generate_test_report
 
 logger = logging.getLogger(__name__)
 @csrf_exempt
@@ -222,36 +222,39 @@ def finish_test(request, test, question_ids, saved_answers):
     
     user = request.user if request.user.is_authenticated else None
     
-    # Создаем общий результат
+    # Создаем запись результата
     result_obj = UserTestResult.objects.create(user=user, test=test, score=0)
     
-    # 1. ОПТИМИЗАЦИЯ: Загружаем ВСЕ вопросы разом (1 запрос к БД)
-    # in_bulk возвращает словарь {id: QuestionObj}
+    # 1. ОПТИМИЗАЦИЯ: Загружаем вопросы массово
     questions_map = Question.objects.in_bulk(question_ids)
+    user_answers_to_create = []
     
-    user_answers_to_create = [] # Список для массового создания
-    
+    # Переменная для определения типа теста
+    has_psychology_questions = False
+
     for q_id in question_ids:
-        # Берем вопрос из памяти, а не из БД
         question = questions_map.get(q_id)
         if not question:
             continue
+
+        # Собираем статистику для определения типа теста
+        cat_code = question.category.lower() if question.category else ""
+        if 'psychology' in cat_code or 'психология' in cat_code:
+            has_psychology_questions = True
 
         ans_id = saved_answers.get(str(q_id))
         selected_answer = None
         is_correct = False
         
         if ans_id:
-            # Тут тоже можно оптимизировать, но пока оставим get, 
-            # так как ответы выбираются редко (по 1 на вопрос)
             selected_answer = Answer.objects.filter(pk=ans_id).first()
             if selected_answer and selected_answer.is_correct:
                 is_correct = True
                 score += 1
-                cat = question.get_category_display()
-                category_stats[cat] = category_stats.get(cat, 0) + 1
+                # Для статистики берем красивое название категории
+                cat_display = question.get_category_display()
+                category_stats[cat_display] = category_stats.get(cat_display, 0) + 1
         
-        # Вместо создания записи сразу, добавляем её в список
         user_answers_to_create.append(UserAnswer(
             result=result_obj,
             question=question,
@@ -259,34 +262,44 @@ def finish_test(request, test, question_ids, saved_answers):
             is_correct=is_correct
         ))
 
-    # 2. ОПТИМИЗАЦИЯ: Сохраняем ВСЕ ответы одним запросом (1 запрос к БД)
+    # Сохраняем ответы
     if user_answers_to_create:
         UserAnswer.objects.bulk_create(user_answers_to_create)
 
-    # Обновляем итоговый балл
     result_obj.score = score
     
-    # Генерируем AI отчет
-    # ВАЖНО: Если ИИ думает дольше 20-25 секунд, таймаут все равно может случиться.
-    # В идеале это нужно выносить в фоновые задачи (Celery), но пока попробуем так.
+    # ОПРЕДЕЛЯЕМ ТИП ТЕСТА
+    test_type = 'iq' # По умолчанию
+    # Если в тесте есть вопросы категории psychology ИЛИ в названии теста есть "Психология"
+    if has_psychology_questions or 'psychology' in test.title_en.lower() or 'психология' in test.title_ru.lower():
+        test_type = 'psychology'
+
+    # Генерируем отчет с учетом типа
     current_lang = get_language()
     username_for_ai = user.username if user else "Candidate"
     
     try:
-        result_obj.ai_analysis = generate_iq_report(username_for_ai, category_stats, score, language=current_lang)
+        # Передаем test_type в функцию
+        result_obj.ai_analysis = generate_test_report(
+            username_for_ai, 
+            category_stats, 
+            score, 
+            test_type=test_type, 
+            language=current_lang
+        )
     except Exception as e:
         print(f"AI Error: {e}")
-        result_obj.ai_analysis = "Анализ временно недоступен / Analysis currently unavailable"
+        result_obj.ai_analysis = "Analysis currently unavailable."
         
     result_obj.save()
     
-    # Очищаем сессию
+    # Очистка сессии
     keys = [f'test_{test.id}_order', f'test_{test.id}_index', f'test_{test.id}_answers', f'test_{test.id}_locked']
     for k in keys:
         if k in request.session:
             del request.session[k]
 
-    # Логика редиректа
+    # Обработка приглашений
     invite_id = request.session.get('active_invitation_id')
     if invite_id:
         try:
