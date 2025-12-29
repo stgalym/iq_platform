@@ -16,13 +16,13 @@ class Command(BaseCommand):
         
         # Создаем тест (заголовки на 3 языках)
         main_test, _ = Test.objects.get_or_create(
-            title_ru="Тест по психологии на оценку кандидата при приеме на работу (Мультиязычный)",
-            title_kk="Жұмысқа үміткерлерді бағалауға арналған психологиялық тест (Көптілді)",
-            title_en="Psychology test to evaluate candidates for employment (Multilingual)",
+            title_ru="IQ тест (Мультиязычный)",
+            title_kk="IQ тест (Көптілді)",
+            title_en="IQ test (Multilingual)",
             defaults={
-                'description_ru': 'Тест по психологии на оценку кандидата при приеме на работу',
-                'description_kk': 'Жұмысқа үміткерлерді бағалауға арналған психологиялық тест ',
-                'description_en': 'Psychology test to evaluate candidates for employment',
+                'description_ru': 'Тест на IQ (Мультиязычный)',
+                'description_kk': 'Тест на IQ (Көптілді)',
+                'description_en': 'Test on IQ (Multilingual)',
                 'questions_count': 96,
                 'time_limit': 60
             }

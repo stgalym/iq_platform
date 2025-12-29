@@ -153,3 +153,6 @@ LOGOUT_REDIRECT_URL = 'home'
 # Настройки для загрузки файлов
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+# Google AI API Key (для генерации отчетов)
+GOOGLE_API_KEY = os.getenv('GOOGLE_API_KEY', None)

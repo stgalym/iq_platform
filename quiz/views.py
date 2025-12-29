@@ -262,33 +262,64 @@ def finish_test(request, test, question_ids, saved_answers):
             is_correct=is_correct
         ))
 
-    # Сохраняем ответы
-    if user_answers_to_create:
-        UserAnswer.objects.bulk_create(user_answers_to_create)
-
-    result_obj.score = score
-    
     # ОПРЕДЕЛЯЕМ ТИП ТЕСТА
     test_type = 'iq' # По умолчанию
     # Если в тесте есть вопросы категории psychology ИЛИ в названии теста есть "Психология"
     if has_psychology_questions or 'psychology' in test.title_en.lower() or 'психология' in test.title_ru.lower():
         test_type = 'psychology'
 
+    # Для психологических тестов собираем детальную информацию об ответах ДО сохранения
+    detailed_answers = None
+    if test_type == 'psychology':
+        detailed_answers = []
+        # Загружаем все правильные ответы заранее для оптимизации
+        all_questions_ids = [ua.question.id for ua in user_answers_to_create]
+        correct_answers_map = {
+            ans.question_id: ans 
+            for ans in Answer.objects.filter(question_id__in=all_questions_ids, is_correct=True)
+        }
+        
+        for user_answer_obj in user_answers_to_create:
+            question = user_answer_obj.question
+            selected_answer = user_answer_obj.selected_answer
+            correct_answer = correct_answers_map.get(question.id)
+            
+            detailed_answers.append({
+                'question_text': question.text,
+                'selected_answer_text': selected_answer.text if selected_answer else 'Не отвечено',
+                'correct_answer_text': correct_answer.text if correct_answer else 'Не определено',
+                'is_correct': user_answer_obj.is_correct
+            })
+
+    # Сохраняем ответы
+    if user_answers_to_create:
+        UserAnswer.objects.bulk_create(user_answers_to_create)
+
+    result_obj.score = score
+    
     # Генерируем отчет с учетом типа
     current_lang = get_language()
     username_for_ai = user.username if user else "Candidate"
     
     try:
-        # Передаем test_type в функцию
+        # Отладочная информация
+        print(f"🔍 DEBUG: test_type={test_type}, detailed_answers count={len(detailed_answers) if detailed_answers else 0}, total_questions={len(question_ids)}")
+        
+        # Передаем test_type и детальную информацию об ответах в функцию
         result_obj.ai_analysis = generate_test_report(
             username_for_ai, 
             category_stats, 
             score, 
             test_type=test_type, 
-            language=current_lang
+            language=current_lang,
+            detailed_answers=detailed_answers,
+            total_questions=len(question_ids)
         )
+        print(f"✅ AI Analysis generated successfully, length: {len(result_obj.ai_analysis) if result_obj.ai_analysis else 0}")
     except Exception as e:
-        print(f"AI Error: {e}")
+        print(f"❌ AI Error: {e}")
+        import traceback
+        traceback.print_exc()
         result_obj.ai_analysis = "Analysis currently unavailable."
         
     result_obj.save()
