@@ -22,6 +22,13 @@ PLAN_CHOICES = (
 )
 
 class Test(models.Model):
+    # Тип теста: для кого предназначен
+    TEST_AUDIENCE_CHOICES = [
+        ('user', 'Для пользователей (самопознание)'),
+        ('recruiter', 'Для рекрутеров (оценка кандидатов)'),
+        ('both', 'Для всех'),
+    ]
+    
     title = models.CharField(max_length=200, verbose_name="Название")
     description = models.TextField(blank=True, verbose_name="Описание")
     image = models.ImageField(upload_to='test_covers/', blank=True, null=True, verbose_name="Обложка")
@@ -29,6 +36,15 @@ class Test(models.Model):
     # Настройки прохождения (День 17)
     questions_count = models.IntegerField(default=10, verbose_name="Кол-во вопросов (N)")
     time_limit = models.IntegerField(default=0, verbose_name="Время на тест (минуты)", help_text="0 - без ограничений")
+    
+    # Новое поле: для кого предназначен тест
+    test_audience = models.CharField(
+        max_length=10, 
+        choices=TEST_AUDIENCE_CHOICES, 
+        default='both',
+        verbose_name="Аудитория теста",
+        help_text="Для кого предназначен этот тест: для пользователей (самопознание) или для рекрутеров (оценка кандидатов)"
+    )
 
     def __str__(self):
         return self.title

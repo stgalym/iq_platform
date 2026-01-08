@@ -2,6 +2,7 @@ import json
 import logging
 import random # <--- Тот самый потерянный импорт
 import os
+import sys
 from django.shortcuts import render, get_object_or_404, redirect
 from django.utils import timezone
 from django.contrib.auth.decorators import login_required
@@ -20,6 +21,23 @@ from .models import Test, Question, Answer, UserTestResult, UserAnswer, TestInvi
 from .ai_service import generate_test_report
 
 logger = logging.getLogger(__name__)
+
+# Вспомогательная функция для безопасного вывода (обрабатывает проблемы с кодировкой Windows)
+def safe_print(*args, **kwargs):
+    """Безопасный print, который обрабатывает ошибки кодировки Unicode"""
+    try:
+        print(*args, **kwargs)
+    except UnicodeEncodeError:
+        # Если не удается вывести с Unicode, выводим без эмодзи
+        safe_args = []
+        for arg in args:
+            if isinstance(arg, str):
+                # Убираем эмодзи и заменяем на текстовые метки
+                safe_arg = arg.encode('ascii', 'ignore').decode('ascii')
+                safe_args.append(safe_arg if safe_arg else str(arg).encode('ascii', 'ignore').decode('ascii'))
+            else:
+                safe_args.append(arg)
+        print(*safe_args, **kwargs)
 @csrf_exempt
 async def telegram_webhook(request):
     """
@@ -55,7 +73,6 @@ async def telegram_webhook(request):
 
 # --- 1. ГЛАВНАЯ (HOME) ---
 def home(request):
-    tests = Test.objects.all()
     user_plan = 'guest'
     locked_test_id = None
     
@@ -71,6 +88,15 @@ def home(request):
             first_result = UserTestResult.objects.filter(user=request.user).order_by('date_taken').first()
             if first_result:
                 locked_test_id = first_result.test.id
+    
+    # Фильтруем тесты в зависимости от тарифа пользователя
+    # Тесты для рекрутеров видны только пользователям с тарифом 'hr' или суперпользователям
+    if request.user.is_authenticated and (user_plan == 'hr' or request.user.is_superuser):
+        # Рекрутеры видят все тесты
+        tests = Test.objects.all()
+    else:
+        # Обычные пользователи видят только тесты для пользователей или для всех
+        tests = Test.objects.exclude(test_audience='recruiter')
 
     return render(request, 'home.html', {
         'tests': tests,
@@ -81,6 +107,27 @@ def home(request):
 # --- 2. ЛОГИКА ТЕСТА (Единая функция) ---
 def test_detail(request, test_id):
     test = get_object_or_404(Test, pk=test_id)
+    
+    # === 0. ПРОВЕРКА ДОСТУПА К ТЕСТУ ДЛЯ РЕКРУТЕРОВ ===
+    # Если тест предназначен только для рекрутеров, проверяем доступ
+    if test.test_audience == 'recruiter':
+        if not request.user.is_authenticated:
+            # Неавторизованные пользователи перенаправляются на вход
+            from django.contrib.auth.views import redirect_to_login
+            return redirect_to_login(request.path)
+        
+        # Проверяем тариф пользователя
+        try:
+            user_plan = request.user.profile.plan
+        except:
+            user_plan = 'free'
+        
+        # Доступ только для рекрутеров или суперпользователей
+        if user_plan != 'hr' and not request.user.is_superuser:
+            return render(request, 'subscription_required.html', {
+                'tier_name': 'HR Recruiter',
+                'message': 'Этот тест доступен только для рекрутеров. Пожалуйста, обновите подписку до тарифа HR.'
+            })
     
     # === 1. ПРОВЕРКА ПОДПИСКИ ===
     if request.user.is_authenticated:
@@ -297,32 +344,88 @@ def finish_test(request, test, question_ids, saved_answers):
 
     result_obj.score = score
     
+    # Определяем, для кого делается анализ
+    # Если тест проходит через приглашение (кандидат) - анализ для рекрутера
+    # Если тест проходит обычный пользователь - анализ для пользователя
+    invite_id = request.session.get('active_invitation_id')
+    is_candidate_test = invite_id is not None
+    
+    # Определяем аудиторию анализа на основе:
+    # 1. Если это кандидат (через приглашение) - всегда для рекрутера
+    # 2. Если это пользователь - смотрим на настройку теста или делаем для пользователя
+    if is_candidate_test:
+        analysis_for = 'recruiter'
+    else:
+        # Если тест предназначен для рекрутеров, но проходит пользователь - все равно для пользователя
+        # Если тест для пользователей или для всех - для пользователя
+        if test.test_audience == 'recruiter':
+            analysis_for = 'recruiter'  # Тест для рекрутеров, но проходит пользователь
+        else:
+            analysis_for = 'user'  # Обычный пользователь проходит тест
+    
     # Генерируем отчет с учетом типа
     current_lang = get_language()
     username_for_ai = user.username if user else "Candidate"
     
     try:
         # Отладочная информация
-        print(f"🔍 DEBUG: test_type={test_type}, detailed_answers count={len(detailed_answers) if detailed_answers else 0}, total_questions={len(question_ids)}")
+        safe_print(f"[DEBUG] test_type={test_type}, analysis_for={analysis_for}, is_candidate={is_candidate_test}, detailed_answers count={len(detailed_answers) if detailed_answers else 0}, total_questions={len(question_ids)}")
         
-        # Передаем test_type и детальную информацию об ответах в функцию
-        result_obj.ai_analysis = generate_test_report(
+        # Передаем test_type, analysis_for и детальную информацию об ответах в функцию
+        analysis_result = generate_test_report(
             username_for_ai, 
             category_stats, 
             score, 
             test_type=test_type, 
             language=current_lang,
             detailed_answers=detailed_answers,
-            total_questions=len(question_ids)
+            total_questions=len(question_ids),
+            analysis_for=analysis_for  # Новый параметр: 'recruiter' или 'user'
         )
-        print(f"✅ AI Analysis generated successfully, length: {len(result_obj.ai_analysis) if result_obj.ai_analysis else 0}")
+        
+        if analysis_result:
+            result_obj.ai_analysis = analysis_result
+            safe_print(f"[OK] AI Analysis generated successfully, length: {len(analysis_result)}")
+        else:
+            safe_print(f"[WARNING] AI Analysis returned empty, using fallback")
+            result_obj.ai_analysis = "Analysis currently unavailable."
+        
     except Exception as e:
-        print(f"❌ AI Error: {e}")
+        safe_print(f"[ERROR] AI Error: {e}")
         import traceback
         traceback.print_exc()
-        result_obj.ai_analysis = "Analysis currently unavailable."
-        
-    result_obj.save()
+        result_obj.ai_analysis = f"Analysis currently unavailable. Error: {str(e)[:100]}"
+    
+    # Сохраняем результат безопасно, используя update() для оптимизации памяти
+    try:
+        # Используем update() вместо save() для больших текстов - это более эффективно
+        from django.db import transaction
+        with transaction.atomic():
+            UserTestResult.objects.filter(pk=result_obj.pk).update(
+                score=result_obj.score,
+                ai_analysis=result_obj.ai_analysis
+            )
+        safe_print(f"[OK] Result saved successfully (ID: {result_obj.id})")
+    except Exception as e:
+        safe_print(f"[ERROR] Error saving result: {e}")
+        import traceback
+        traceback.print_exc()
+        # Пробуем сохранить без AI анализа
+        try:
+            with transaction.atomic():
+                UserTestResult.objects.filter(pk=result_obj.pk).update(
+                    score=result_obj.score,
+                    ai_analysis=None
+                )
+            safe_print(f"[WARNING] Result saved without AI analysis")
+        except Exception as e2:
+            safe_print(f"[CRITICAL] Could not save result at all: {e2}")
+            # В критическом случае удаляем объект, чтобы не было мусора в БД
+            try:
+                result_obj.delete()
+            except:
+                pass
+            raise
     
     # Очистка сессии
     keys = [f'test_{test.id}_order', f'test_{test.id}_index', f'test_{test.id}_answers', f'test_{test.id}_locked']
@@ -330,8 +433,7 @@ def finish_test(request, test, question_ids, saved_answers):
         if k in request.session:
             del request.session[k]
 
-    # Обработка приглашений
-    invite_id = request.session.get('active_invitation_id')
+    # Обработка приглашений (используем уже определенный invite_id выше)
     if invite_id:
         try:
             invite = TestInvitation.objects.get(pk=invite_id)
@@ -390,7 +492,7 @@ def hr_dashboard(request):
         plan = 'free'
 
     # --- ДИАГНОСТИКА (Смотрите в терминал!) ---
-    print(f"🔍 ПРОВЕРКА: Юзер={request.user.username} | План={plan} | Суперюзер={request.user.is_superuser}")
+    safe_print(f"[DEBUG] PROVERKA: User={request.user.username} | Plan={plan} | Superuser={request.user.is_superuser}")
     # ------------------------------------------
 
     # 2. ЖЕСТКАЯ ПРОВЕРКА ДОСТУПА
